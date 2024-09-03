@@ -1,24 +1,22 @@
-package com.bankaccount.cs425bank.dto;
+package com.bankaccount.cs425bank.dto.ResponseDto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotNull;
+import com.bankaccount.cs425bank.dto.ResponseDto.AccountResponseDTO;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.naming.Name;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CustomerResponseDTO {
     private Integer customerId;
     private String firstName;
     private String lastName;
     private String telephone;
     private List<AccountResponseDTO> accounts;
+
 }

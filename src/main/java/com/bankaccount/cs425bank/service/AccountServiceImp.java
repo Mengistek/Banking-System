@@ -1,16 +1,18 @@
 package com.bankaccount.cs425bank.service;
 
-import com.bankaccount.cs425bank.dto.AccountRequestDto;
-import com.bankaccount.cs425bank.dto.AccountResponseDTO;
-import com.bankaccount.cs425bank.dto.CustomerRequestDTO;
-import com.bankaccount.cs425bank.dto.CustomerResponseDTO;
+import com.bankaccount.cs425bank.dto.RequestDto.AccountRequestDto;
+import com.bankaccount.cs425bank.dto.ResponseDto.AccountResponseDTO;
+import com.bankaccount.cs425bank.dto.RequestDto.CustomerRequestDTO;
+import com.bankaccount.cs425bank.dto.ResponseDto.AccountWithCustomerResponse;
+import com.bankaccount.cs425bank.dto.ResponseDto.CustomerResponseDTO;
+import com.bankaccount.cs425bank.dto.ResponseDto.CustomerWithAccounts;
 
 import java.util.List;
 
 
 public interface AccountServiceImp {
-    CustomerResponseDTO createCustomer(CustomerRequestDTO customerRequestDTO);
-    AccountResponseDTO createAccountForCustomer(Integer customerId, AccountRequestDto accountRequestDto);
-    CustomerResponseDTO getCustomerById(Integer customerId);
-    List<AccountResponseDTO> getPlatinumAccounts();
+    CustomerWithAccounts createAccountForCustomer(Integer customerId, AccountRequestDto accountRequestDTO);
+
+    List<AccountWithCustomerResponse> getPlatinumAccounts(int years, String status );
+
 }

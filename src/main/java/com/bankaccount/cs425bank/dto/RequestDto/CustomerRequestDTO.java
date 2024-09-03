@@ -1,4 +1,4 @@
-package com.bankaccount.cs425bank.dto;
+package com.bankaccount.cs425bank.dto.RequestDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

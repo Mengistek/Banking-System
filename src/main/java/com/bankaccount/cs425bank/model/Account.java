@@ -1,20 +1,24 @@
 package com.bankaccount.cs425bank.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
+@Table(name = "accounts")
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,19 +33,17 @@ public class Account {
     private LocalDate dateOpened;
 
 
-    @NotNull
+    @NotBlank(message = "Status can not be empty")
     private String status;
 
-    @NotNull
+    @Column(nullable = false)
     private BigDecimal balance;
 
+    @NotNull
+    private String accountType;
 
-
-    @ManyToMany
-    @JoinTable(name = "customer_account",
-            joinColumns = @JoinColumn(name = "account_id"),
-            inverseJoinColumns = @JoinColumn(name = "customer_id"))
-    private Set<Customer> customers = new HashSet<>();
+    @ManyToMany(mappedBy = "accounts", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Customer> customers = new ArrayList<>();
 
 
 

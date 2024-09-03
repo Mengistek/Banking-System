@@ -1,4 +1,4 @@
-package com.bankaccount.cs425bank.dto;
+package com.bankaccount.cs425bank.dto.RequestDto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -26,5 +26,8 @@ public class AccountRequestDto {
     @NotNull
     @DecimalMin("0.0")
     private BigDecimal balance;
+
+    @NotNull
+    private String accountType;
 
 }

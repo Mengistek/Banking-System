@@ -1,69 +1,96 @@
 package com.bankaccount.cs425bank.service;
 
-import com.bankaccount.cs425bank.dto.AccountRequestDto;
-import com.bankaccount.cs425bank.dto.AccountResponseDTO;
-import com.bankaccount.cs425bank.dto.CustomerRequestDTO;
-import com.bankaccount.cs425bank.dto.CustomerResponseDTO;
+import com.bankaccount.cs425bank.dto.RequestDto.AccountRequestDto;
+import com.bankaccount.cs425bank.dto.ResponseDto.AccountResponseDTO;
+import com.bankaccount.cs425bank.dto.RequestDto.CustomerRequestDTO;
+import com.bankaccount.cs425bank.dto.ResponseDto.AccountWithCustomerResponse;
+import com.bankaccount.cs425bank.dto.ResponseDto.CustomerResponseDTO;
+import com.bankaccount.cs425bank.dto.ResponseDto.CustomerWithAccounts;
 import com.bankaccount.cs425bank.exception.CustomerNotFoundException;
 import com.bankaccount.cs425bank.model.Account;
 import com.bankaccount.cs425bank.model.Customer;
 import com.bankaccount.cs425bank.repository.AccountRepository;
 import com.bankaccount.cs425bank.repository.CustomerRepository;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+
 public class AccountService implements AccountServiceImp{
-    @Autowired
-    private  CustomerRepository customerRepository;
-    @Autowired
-    private ModelMapper modelMapper;
-    @Autowired
-    private AccountRepository accountRepository;
+
+    private final CustomerRepository customerRepository;
+
+    private final ModelMapper modelMapper;
+
+    private final AccountRepository accountRepository;
     @Override
-    public List<AccountResponseDTO> getPlatinumAccounts() {
-            LocalDate fiveYearsAgo= LocalDate.now().minusYears(5);
-            return accountRepository.findByDateOpenedBeforeAndStatus(fiveYearsAgo,"Active")
-                .stream().map(account -> modelMapper.map(account,AccountResponseDTO.class))
-                .sorted(Comparator.comparing(AccountResponseDTO::getBalance).reversed())
-                .collect(Collectors.toList());
+    public List<AccountWithCustomerResponse> getPlatinumAccounts(int years,String active ) {
+        List<Account> accounts = accountRepository.findAllAccountsDateCreatedGreaterThanFiveYearsAndActive(years,active);
+           return  accounts.stream()
+                   .map(account -> {
+                       AccountWithCustomerResponse response = modelMapper.map(account, AccountWithCustomerResponse.class);
+                       List<CustomerResponseDTO> customerResponses = account.getCustomers().stream()
+                               .map(customer -> modelMapper.map(customer, CustomerResponseDTO.class))
+                               .collect(Collectors.toList());  // Collect the mapped customers into a list
+                       response.setCustomerResponses(customerResponses);  // Set the collected list
+                       return response;
+                   })
+                   .collect(Collectors.toList());
+
     }
     @Override
-    public CustomerResponseDTO createCustomer(CustomerRequestDTO customerRequestDTO){
-            Customer customer = modelMapper.map(customerRequestDTO,Customer.class);
+    public CustomerWithAccounts createAccountForCustomer(Integer customerId, AccountRequestDto accountRequestDTO) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException(customerId));
 
-            customer = customerRepository.save(customer);
-            return modelMapper.map(customer,CustomerResponseDTO.class);
-    }
-    @Override
-    public CustomerResponseDTO getCustomerById(Integer customerId){
-          Customer customer = customerRepository.findById(customerId)
-                  .orElseThrow(()-> new CustomerNotFoundException( customerId)) ;
-          return  modelMapper.map(customer,CustomerResponseDTO.class);
-    }
-
-    public AccountResponseDTO createAccountForCustomer(Integer customerId, AccountRequestDto accountRequestDto) {
-            Customer customer = customerRepository.findById(customerId)
-                    .orElseThrow(() -> new CustomerNotFoundException(customerId));
-
-        Account account = modelMapper.map(accountRequestDto,Account.class);
-
+        Account account =Account.builder()
+                .accountNumber(accountRequestDTO.getAccountNumber())
+                .dateOpened(accountRequestDTO.getDateOpened())
+                .status(accountRequestDTO.getStatus())
+                .balance(accountRequestDTO.getBalance())
+                .accountType(accountRequestDTO.getAccountType())
+                .build();
+        //initialize the customer if it is null
         if (account.getCustomers() == null){
-            account.setCustomers(new HashSet<>());
+            account.setCustomers(new ArrayList<>());
+        }
+        //add the customer to the account's customer list
+        account.getCustomers().add(customer);
+
+        //add the account to the customer's account list
+        if (customer.getAccounts() == null){
+            customer.setAccounts(new ArrayList<>());
         }
 
-        account.getCustomers().add(customer);
-        account = accountRepository.save(account);
+        customer.getAccounts().add(account);
 
-        return modelMapper.map(account,AccountResponseDTO.class);
+
+        //save the account and the customer
+        accountRepository.save(account);
+        customerRepository.save(customer);
+
+        //convert the account to AccountResponse
+        AccountResponseDTO accountResponseDTO = modelMapper.map(account, AccountResponseDTO.class);
+
+        return CustomerWithAccounts.builder()
+                .customerId(customer.getCustomerId())
+                .firstName(customer.getFirstName())
+                .lastName(customer.getLastName())
+                .telephone(customer.getTelephone())
+                .accountResponses(Collections.singletonList(accountResponseDTO))
+                .build();
+
     }
-}
+
+
+    }
+
+
